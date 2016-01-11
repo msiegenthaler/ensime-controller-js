@@ -1,92 +1,85 @@
-var launcher = require("ensime-launcher-js");
+var Launcher = require("ensime-launcher-js");
 var WebSocket = require("ws");
 
-var initialized;
-var dotEnsime;
-var sbtCmd = "sbt";
-var ensimeVersion = "0.9.10-SNAPSHOT";
 
-var connection;
-var nextCallId = 0;
-var callMap = {};
+function Controller(dotEnsime, ensimeInstallDir, options) {
+  this.dotEnsime = dotEnsime;
 
+  if (options && "sbt" in options) this.sbtCmd = options.sbt;
+  else this.sbtCmd = "sbt";
+  if (options && "ensimeVersion" in options) this.ensimeVersion = options.ensimeVersion;
+  else this.ensimeVersion = "0.9.10-SNAPSHOT";
 
-function setup(dotEnsime_, ensimeInstallDir, options) {
-  dotEnsime = dotEnsime_;
-  if (options) {
-    if (options.sbt) sbtCmd = options.sbt;
-    if (options.ensimeVersion) ensimeVersion = options.ensimeVersion;
-  }
-  launcher.setup(dotEnsime_, ensimeVersion, ensimeInstallDir, sbtCmd);
-  initialized = true;
+  this.connection = null;
+  this.nextCallId = 0;
+  this.callMap = {};
+
+  this.launcher = new Launcher(this.dotEnsime, this.ensimeVersion, ensimeInstallDir, this.sbtCmd);
 }
 
-function connect(callback) {
-  if (!initialized) return callback("Not initialized, please call setup first.");
-
+Controller.prototype.connect = function(callback) {
   //TODO check already running...
 
-  launcher.start(function(err, ports) {
+  this.launcher.start(function(err, ports) {
     console.log(callback);
     if (err) return callback(err);
 
     console.log("ensime now running on port "+ports.http);
 
-    connection = new WebSocket("ws://localhost:"+ports.http+"/jerky");
-    connection.on("open", function() {
+    this.connection = new WebSocket("ws://localhost:"+ports.http+"/jerky");
+    this.connection.on("open", function() {
       console.log("now connected to ensime...");
-      status(callback);
-    });
-    connection.on("message", handleIncoming);
-    connection.on("error", function (error) {
-      handleGeneral({disconnected: error});
-    });
-  });
+      this.status(callback);
+    }.bind(this));
+    this.connection.on("message", this.handleIncoming.bind(this));
+    this.connection.on("error", function (error) {
+      this.handleGeneral({disconnected: error});
+    }.bind(this));
+  }.bind(this));
 }
 
-function update(callback) {
-  launcher.update(callback);
+Controller.prototype.update = function(callback) {
+  this.launcher.update(callback);
 }
 
 /** Send a command to ensime. */
-function send(cmd, callback) {
-  if (!connection) return callback("connection not open.");
+Controller.prototype.send = function(cmd, callback) {
+  if (!this.connection) return callback("connection not open.");
 
-  var callId = nextCallId++;
-  callMap[callId] = callback;
+  var callId = this.nextCallId++;
+  this.callMap[callId] = callback;
   var req = {
     req: cmd,
     callId: callId
   }
   //console.debug("Sending "+JSON.stringify(req));
-  connection.send(JSON.stringify(req));
+  this.connection.send(JSON.stringify(req));
 }
 
 /** Handle an incoming message from ensime. */
-function handleIncoming(data) {
+Controller.prototype.handleIncoming = function(data) {
   var resp = JSON.parse(data);
   if ("callId" in resp) {
-    var callback = callMap[resp.callId];
-    if (callback) {
+    if (resp.callId in this.callMap) {
       try {
-        callback(false, resp.payload);
+        this.callMap[resp.callId](false, resp.payload);
       } catch (e) {
         console.error("Error in callback: "+e)
       } finally {
-        delete callMap[resp.callId];
+        delete this.callMap[resp.callId];
       }
     }
-  } else handleGeneral(resp.payload);
+  } else this.handleGeneral(resp.payload);
 }
 
-function cancelPending(reason) {
-  for (key in callMap) {
-    callMap[key](reason);
+Controller.prototype.cancelPending = function(reason) {
+  for (key in this.callMap) {
+    this.callMap[key](reason);
   }
-  callMap = {};
+  this.callMap = {};
 }
 
-function handleGeneral(response) {
+Controller.prototype.handleGeneral = function(response) {
   //TODO
   console.log("Received general message: "+JSON.stringify(response));
 }
@@ -94,40 +87,19 @@ function handleGeneral(response) {
 
 
 
-function status(callback) {
-  if (!initialized) return callback("Not initialized, please call setup first.");
-
-  send({
+Controller.prototype.status = function(callback) {
+  this.send({
       typehint: "ConnectionInfoReq"
-  }, function(err, result) {
-    callback(err, result);
-  });
+  }, callback);
 }
 
 
-function stop(callback) {
-  if (!initialized) return callback("Not initialized, please call setup first.");
-
-  cancelPending("connection lost");
+Controller.prototype.stop = function(callback) {
+  this.cancelPending("connection lost");
 
   //TODO
   callback("TODO");
 }
 
 
-module.exports = {
-  /** Setup the library. Must be called before any other function. */
-  setup: setup,
-
-  /** Start ensime and connect to it. */
-  connect: connect,
-
-  /** Update ensime. */
-  update: update,
-
-  /** Current status of ensime. */
-  status: status,
-
-  /** Terminate ensime. */
-  stop: stop
-};
+module.exports = Controller;
