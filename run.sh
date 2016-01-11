@@ -12,5 +12,7 @@ ec.setup(dotEnsime, "/tmp/ensime");
 ec.connect(function(err, res) {
   if (err) return console.error(err);
 
-  console.info(res);
+  console.log("========= Connected ==================");
+  console.log(res);
+  console.log("======================================");
 });

@@ -22,6 +22,7 @@
   },
   "homepage": "https://github.com/msiegenthaler/ensime-controller-js#readme",
   "dependencies": {
-    "ensime-launcher-js": "0.0.3"
+    "ensime-launcher-js": "^0.0.5",
+    "ws": "^1.0.1"
   }
 }
