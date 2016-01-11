@@ -98,16 +98,15 @@ Controller.prototype.stop = function(callback) {
   this.cancelPending("Stop requested.");
 
   //Disconnect
-  if (connection) {
+  if (this.connection) {
     try {
-      connection.close();
+      this.connection.close();
     } catch (e) {
       //ignore
     }
   }
 
-  //TODO
-  callback("TODO");
+  this.launcher.stop(callback);
 }
 
 

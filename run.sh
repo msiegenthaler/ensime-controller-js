@@ -15,4 +15,11 @@ ec.connect(function(err, res) {
   console.log("========= Connected ==================");
   console.log(res);
   console.log("======================================");
+
+  setTimeout(function() {
+    ec.stop(function(err) {
+      if (err) return console.error(err);
+      console.log("============= Stopped =================");
+    });
+  }, 2000);
 });
