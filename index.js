@@ -95,7 +95,16 @@ Controller.prototype.status = function(callback) {
 
 
 Controller.prototype.stop = function(callback) {
-  this.cancelPending("connection lost");
+  this.cancelPending("Stop requested.");
+
+  //Disconnect
+  if (connection) {
+    try {
+      connection.close();
+    } catch (e) {
+      //ignore
+    }
+  }
 
   //TODO
   callback("TODO");
