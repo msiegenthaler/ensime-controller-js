@@ -1,6 +1,6 @@
 {
   "name": "ensime-controller-js",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Controls the ENSIME server and establishes the communication with it.",
   "main": "index.js",
   "scripts": {
