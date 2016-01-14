@@ -12,7 +12,7 @@ Constructor
 
 The following methods are available:
 
-  - *connect(callback)*: Start ENSIME and connect to it.
+  - *connect(callback)*: Start ENSIME and connect to it. It will cleanup already running but unmanaged instances of ensime.
   - *status(callback)*: Request the current status. Fails if not running, else returns a ConnectionInfo.
   - *send(req, callback)*: Send an rpc request to ENSIME.
   - *stop(callback)*: Disconnect and stop ensime.

@@ -18,22 +18,24 @@ function Controller(dotEnsime, ensimeInstallDir, options) {
 }
 
 Controller.prototype.connect = function(callback) {
-  //TODO check already running...
+  if (this.connection) return this.status(callback);
 
-  this.launcher.start(function(err, ports) {
-    console.log(callback);
-    if (err) return callback(err);
+  this.launcher.cleanup(function() {
+    this.launcher.start(function(err, ports) {
+      console.log(callback);
+      if (err) return callback(err);
 
-    console.log("ensime now running on port "+ports.http);
+      console.log("ensime now running on port "+ports.http);
 
-    this.connection = new WebSocket("ws://localhost:"+ports.http+"/jerky");
-    this.connection.on("open", function() {
-      console.log("now connected to ensime...");
-      this.status(callback);
-    }.bind(this));
-    this.connection.on("message", this.handleIncoming.bind(this));
-    this.connection.on("error", function (error) {
-      this.handleGeneral({disconnected: error});
+      this.connection = new WebSocket("ws://localhost:"+ports.http+"/jerky");
+      this.connection.on("open", function() {
+        console.log("now connected to ensime...");
+        this.status(callback);
+      }.bind(this));
+      this.connection.on("message", this.handleIncoming.bind(this));
+      this.connection.on("error", function (error) {
+        this.handleGeneral({disconnected: error});
+      }.bind(this));
     }.bind(this));
   }.bind(this));
 }

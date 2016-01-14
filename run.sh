@@ -21,5 +21,5 @@ ec.connect(function(err, res) {
       if (err) return console.error(err);
       console.log("============= Stopped =================");
     });
-  }, 2000);
+  }, 20000);
 });
