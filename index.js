@@ -17,11 +17,14 @@ function Controller(dotEnsime, ensimeInstallDir, options) {
   this.launcher = new Launcher(this.dotEnsime, this.ensimeVersion, ensimeInstallDir, this.sbtCmd);
 }
 
-Controller.prototype.connect = function(callback) {
+/** Connect to ensime, starting it first if necessary.
+  * @param output {out: Stream, err: Stream}
+  * @return ensime ConnectionInfo */
+Controller.prototype.connect = function(output, callback) {
   if (this.connection) return this.status(callback);
 
   this.launcher.cleanup(function() {
-    this.launcher.start(function(err, ports) {
+    this.launcher.start(output, function(err, ports) {
       console.log(callback);
       if (err) return callback(err);
 
@@ -40,8 +43,11 @@ Controller.prototype.connect = function(callback) {
   }.bind(this));
 }
 
-Controller.prototype.update = function(callback) {
-  this.launcher.update(callback);
+/** Update ensime to the specified version. Can also be used to fix installations.
+  * @param output {out: Stream, err: Stream}
+  * @return nothing */
+Controller.prototype.update = function(output, callback) {
+  this.launcher.update(output, callback);
 }
 
 /** Send a command to ensime. */
