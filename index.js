@@ -25,7 +25,6 @@ Controller.prototype.connect = function(output, callback) {
 
   this.launcher.cleanup(function() {
     this.launcher.start(output, function(err, ports) {
-      console.log(callback);
       if (err) return callback(err);
 
       console.log("ensime now running on port "+ports.http);
