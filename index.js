@@ -19,7 +19,7 @@ function Controller(dotEnsime, ensimeInstallDir, options) {
 
 /** Connect to ensime, starting it first if necessary.
   * @param output {out: Stream, err: Stream}
-  * @return ensime ConnectionInfo */
+  * @return {ports: {http: Int}, info: Ensime-ConnectionInfo} */
 Controller.prototype.connect = function(output, callback) {
   if (this.connection) return this.status(callback);
 
@@ -32,7 +32,13 @@ Controller.prototype.connect = function(output, callback) {
       this.connection = new WebSocket("ws://localhost:"+ports.http+"/jerky");
       this.connection.on("open", function() {
         console.log("now connected to ensime...");
-        this.status(callback);
+        this.status(function(err, data) {
+          if (err) return callback(err);
+          callback(false, {
+            ports: ports
+            info: data
+          });
+        }.bind(this));
       }.bind(this));
       this.connection.on("message", this.handleIncoming.bind(this));
       this.connection.on("error", function (error) {
