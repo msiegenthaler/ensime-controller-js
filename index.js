@@ -35,7 +35,7 @@ Controller.prototype.connect = function(output, callback) {
         this.status(function(err, data) {
           if (err) return callback(err);
           callback(false, {
-            ports: ports
+            ports: ports,
             info: data
           });
         }.bind(this));
