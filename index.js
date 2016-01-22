@@ -18,8 +18,8 @@ function Controller(dotEnsime, ensimeInstallDir, options) {
 }
 
 /** Connect to ensime, starting it first if necessary.
-  * @param output {out: Stream, err: Stream}
-  * @return {ports: {http: Int}, info: ensime-ConnectionInfo} */
+ * @param output {out: Stream, err: Stream}
+ * @return {ports: {http: Int}, info: ensime-ConnectionInfo} */
 Controller.prototype.connect = function(output, callback) {
   if (this.connection) return this.status(callback);
 
@@ -27,20 +27,20 @@ Controller.prototype.connect = function(output, callback) {
     this.launcher.start(output, function(err, ports) {
       if (err) return callback(err);
       console.log("ensime now running on port " + ports.http);
-      this.connectWebsocket(ports, callback)
+      this.connectWebsocket(ports, callback);
     }.bind(this));
   }.bind(this));
-}
+};
 
 /** Try to attach to a currently running ensime.
  * @return {ports: {http: Int}, info: ensime-ConnectionInfo} */
 Controller.prototype.attach = function(callback) {
   this.launcher.ports(function(err, ports) {
     if (err) return callback("not running");
-    console.log("Detected ensime on port "+ports.http);
+    console.log("Detected ensime on port " + ports.http);
     this.connectWebsocket(ports, callback);
   }.bind(this));
-}
+};
 
 Controller.prototype.connectWebsocket = function(ports, callback) {
   this.connection = new WebSocket("ws://localhost:" + ports.http + "/jerky");
@@ -55,17 +55,19 @@ Controller.prototype.connectWebsocket = function(ports, callback) {
     }.bind(this));
   }.bind(this));
   this.connection.on("message", this.handleIncoming.bind(this));
-  this.connection.on("error", function (error) {
-    this.handleGeneral({disconnected: error});
+  this.connection.on("error", function(error) {
+    this.handleGeneral({
+      disconnected: error
+    });
   }.bind(this));
 };
 
 /** Update ensime to the specified version. Can also be used to fix installations.
-  * @param output {out: Stream, err: Stream}
-  * @return nothing */
+ * @param output {out: Stream, err: Stream}
+ * @return nothing */
 Controller.prototype.update = function(output, callback) {
   this.launcher.update(output, callback);
-}
+};
 
 /** Send a command to ensime. */
 Controller.prototype.send = function(cmd, callback) {
@@ -76,10 +78,10 @@ Controller.prototype.send = function(cmd, callback) {
   var req = {
     req: cmd,
     callId: callId
-  }
+  };
   //console.debug("Sending "+JSON.stringify(req));
   this.connection.send(JSON.stringify(req));
-}
+};
 
 /** Handle an incoming message from ensime. */
 Controller.prototype.handleIncoming = function(data) {
@@ -88,35 +90,39 @@ Controller.prototype.handleIncoming = function(data) {
     if (resp.callId in this.callMap) {
       try {
         this.callMap[resp.callId](false, resp.payload);
-      } catch (e) {
-        console.error("Error in callback: "+e)
-      } finally {
+      }
+      catch (e) {
+        console.error("Error in callback: " + e);
+      }
+      finally {
         delete this.callMap[resp.callId];
       }
     }
-  } else this.handleGeneral(resp.payload);
-}
+  }
+  else this.handleGeneral(resp.payload);
+};
 
 Controller.prototype.cancelPending = function(reason) {
+  var key;
   for (key in this.callMap) {
     this.callMap[key](reason);
   }
   this.callMap = {};
-}
+};
 
 Controller.prototype.handleGeneral = function(response) {
   //TODO
-  console.log("Received general message: "+JSON.stringify(response));
-}
+  console.log("Received general message: " + JSON.stringify(response));
+};
 
 
 
 
 Controller.prototype.status = function(callback) {
   this.send({
-      typehint: "ConnectionInfoReq"
+    typehint: "ConnectionInfoReq"
   }, callback);
-}
+};
 
 
 Controller.prototype.stop = function(callback) {
@@ -126,13 +132,14 @@ Controller.prototype.stop = function(callback) {
   if (this.connection) {
     try {
       this.connection.close();
-    } catch (e) {
+    }
+    catch (e) {
       //ignore
     }
   }
 
   this.launcher.stop(callback);
-}
+};
 
 
 module.exports = Controller;
