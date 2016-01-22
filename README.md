@@ -14,6 +14,7 @@ The following methods are available:
 
   - *update(output, callback)*: (Re)download the newest version of ensime.
   - *connect(output, callback)*: Start ENSIME and connect to it. It will cleanup already running but unmanaged instances of ensime.
+  - *attach(callback)*: Try to attach to a currently running ENSIME.
   - *status(callback)*: Request the current status. Fails if not running, else returns a ConnectionInfo.
   - *send(req, callback)*: Send an rpc request to ENSIME.
   - *stop(callback)*: Disconnect and stop ensime.

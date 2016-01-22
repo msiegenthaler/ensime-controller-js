@@ -19,34 +19,46 @@ function Controller(dotEnsime, ensimeInstallDir, options) {
 
 /** Connect to ensime, starting it first if necessary.
   * @param output {out: Stream, err: Stream}
-  * @return {ports: {http: Int}, info: Ensime-ConnectionInfo} */
+  * @return {ports: {http: Int}, info: ensime-ConnectionInfo} */
 Controller.prototype.connect = function(output, callback) {
   if (this.connection) return this.status(callback);
 
   this.launcher.cleanup(function() {
     this.launcher.start(output, function(err, ports) {
       if (err) return callback(err);
-
-      console.log("ensime now running on port "+ports.http);
-
-      this.connection = new WebSocket("ws://localhost:"+ports.http+"/jerky");
-      this.connection.on("open", function() {
-        console.log("now connected to ensime...");
-        this.status(function(err, data) {
-          if (err) return callback(err);
-          callback(false, {
-            ports: ports,
-            info: data
-          });
-        }.bind(this));
-      }.bind(this));
-      this.connection.on("message", this.handleIncoming.bind(this));
-      this.connection.on("error", function (error) {
-        this.handleGeneral({disconnected: error});
-      }.bind(this));
+      console.log("ensime now running on port " + ports.http);
+      this.connectWebsocket(ports, callback)
     }.bind(this));
   }.bind(this));
 }
+
+/** Try to attach to a currently running ensime.
+ * @return {ports: {http: Int}, info: ensime-ConnectionInfo} */
+Controller.prototype.attach = function(callback) {
+  this.launcher.ports(function(err, ports) {
+    if (err) return callback("not running");
+    console.log("Detected ensime on port "+ports.http);
+    this.connectWebsocket(ports, callback);
+  }.bind(this));
+}
+
+Controller.prototype.connectWebsocket = function(ports, callback) {
+  this.connection = new WebSocket("ws://localhost:" + ports.http + "/jerky");
+  this.connection.on("open", function() {
+    console.log("now connected to ensime...");
+    this.status(function(err, data) {
+      if (err) return callback(err);
+      callback(false, {
+        ports: ports,
+        info: data
+      });
+    }.bind(this));
+  }.bind(this));
+  this.connection.on("message", this.handleIncoming.bind(this));
+  this.connection.on("error", function (error) {
+    this.handleGeneral({disconnected: error});
+  }.bind(this));
+};
 
 /** Update ensime to the specified version. Can also be used to fix installations.
   * @param output {out: Stream, err: Stream}
