@@ -58,10 +58,10 @@ Controller.prototype.connectWebsocket = function(ports, callback) {
   var calledBack = false;
   ws.on("open", function() {
     console.log("now connected to ensime...");
+    this.connection = ws;
     this.status(function(err, data) {
       if (err) return callback(err);
       if (!calledBack) {
-        this.connection = ws;
         callback(false, {
           ports: ports,
           info: data
