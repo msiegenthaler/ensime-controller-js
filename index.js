@@ -23,6 +23,7 @@ function Controller(dotEnsime, ensimeInstallDir, options) {
 Controller.prototype.connect = function(output, callback) {
   var _this = this
   function doConnect() {
+    _this.connection = null;
     _this.launcher.cleanup(function() {
       _this.launcher.start(output, function(err, ports) {
         if (err) return callback(err);
@@ -55,7 +56,7 @@ Controller.prototype.attach = function(callback) {
 Controller.prototype.connectWebsocket = function(ports, callback) {
   var ws = new WebSocket("ws://localhost:" + ports.http + "/jerky");
   var calledBack = false;
-  this.connection.on("open", function() {
+  ws.on("open", function() {
     console.log("now connected to ensime...");
     this.status(function(err, data) {
       if (err) return callback(err);
@@ -69,9 +70,9 @@ Controller.prototype.connectWebsocket = function(ports, callback) {
       }
     }.bind(this));
   }.bind(this));
-  this.connection.on("message", this.handleIncoming.bind(this));
-  this.connection.on("error", function(error) {
-    this.connection = undefined;
+  ws.on("message", this.handleIncoming.bind(this));
+  ws.on("error", function(error) {
+    this.connection = null;
     if (!calledBack) {
       callback(error);
       calledBack = true;
