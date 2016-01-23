@@ -54,21 +54,30 @@ Controller.prototype.attach = function(callback) {
 
 Controller.prototype.connectWebsocket = function(ports, callback) {
   this.connection = new WebSocket("ws://localhost:" + ports.http + "/jerky");
+  var calledBack = false;
   this.connection.on("open", function() {
     console.log("now connected to ensime...");
     this.status(function(err, data) {
       if (err) return callback(err);
-      callback(false, {
-        ports: ports,
-        info: data
-      });
+      if (!calledBack) {
+        callback(false, {
+          ports: ports,
+          info: data
+        });
+        calledBack = true;
+      }
     }.bind(this));
   }.bind(this));
   this.connection.on("message", this.handleIncoming.bind(this));
   this.connection.on("error", function(error) {
-    this.handleGeneral({
-      disconnected: error
-    });
+    if (!calledBack) {
+      callback(error);
+      calledBack = true;
+    } else {
+      this.handleGeneral({
+        disconnected: error
+      });
+    }
   }.bind(this));
 };
 
