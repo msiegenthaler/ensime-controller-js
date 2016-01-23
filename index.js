@@ -21,15 +21,25 @@ function Controller(dotEnsime, ensimeInstallDir, options) {
  * @param output {out: Stream, err: Stream}
  * @return {ports: {http: Int}, info: ensime-ConnectionInfo} */
 Controller.prototype.connect = function(output, callback) {
-  if (this.connection) return this.status(callback);
+  var _this = this
+  function doConnect() {
+    _this.launcher.cleanup(function() {
+      _this.launcher.start(output, function(err, ports) {
+        if (err) return callback(err);
+        console.log("ensime now running on port " + ports.http);
+        _this.connectWebsocket(ports, callback);
+      });
+    });
+  }
 
-  this.launcher.cleanup(function() {
-    this.launcher.start(output, function(err, ports) {
-      if (err) return callback(err);
-      console.log("ensime now running on port " + ports.http);
-      this.connectWebsocket(ports, callback);
-    }.bind(this));
-  }.bind(this));
+  if (_this.connection) {
+    return _this.status(function(err, res) {
+      if (err) return doConnect();
+      callback(false, res);
+    });
+  } else {
+    doConnect();
+  }
 };
 
 /** Try to attach to a currently running ensime.
