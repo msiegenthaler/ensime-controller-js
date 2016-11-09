@@ -8,7 +8,7 @@ function Controller(dotEnsime, ensimeInstallDir, options) {
   if (options && "sbt" in options) this.sbtCmd = options.sbt;
   else this.sbtCmd = "sbt";
   if (options && "ensimeVersion" in options) this.ensimeVersion = options.ensimeVersion;
-  else this.ensimeVersion = "0.9.10-SNAPSHOT";
+  else this.ensimeVersion = "1.0.0";
 
   this.connection = null;
   this.nextCallId = 0;
